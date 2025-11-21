@@ -1,18 +1,82 @@
-# Salesforce DX Project: Next Steps
+# Customer Sentiment & Notification Hub
 
-Now that you’ve created a Salesforce DX project, what’s next? Here are some documentation resources to get you started.
+## 🔹 Resumen
+Este proyecto demuestra un flujo completo de automatización en Salesforce que:
 
-## How Do You Plan to Deploy Your Changes?
+1. Detecta cambios en el mensaje del cliente (`Latest_Client_Message__c`) en un **Case**.
+2. Analiza el sentimiento del mensaje mediante un **Apex callout a API externa** (mock para demo).
+3. Registra el sentimiento (Positive / Neutral / Negative) y su score en el Case.
+4. Si el sentimiento es negativo:
+   - Crea automáticamente una **Task/Activity** relacionada al Case.
+   - Actualiza campos del Case según reglas de negocio.
+   - Envía notificaciones por correo.
+   - Registra logs internos mediante `LogService`.
 
-Do you want to deploy a set of changes, or create a self-contained application? Choose a [development model](https://developer.salesforce.com/tools/vscode/en/user-guide/development-models).
+---
 
-## Configure Your Salesforce DX Project
+## 🔹 Tecnologías y conceptos usados
+- **Salesforce Flow**:
+  - Record-Triggered Flow (cuando cambia `Latest_Client_Message__c`)
+  - Subflows para casos negativos
+- **Apex**:
+  - `SentimentService.cls` → Lógica de API callout
+  - `CaseSentimentDomain.cls` → Lógica de negocio y bulkification
+  - `ActivityCreator.cls` → Creación de Task/Activity desde Flow
+  - `LogService.cls` → Registro de logs internos
+- **DTOs** para request/response de API
+- **Test classes** >90% coverage
+- **Best practices**:
+  - Separación de capas
+  - Bulkification
+  - Invocable Methods para Flow
+  - Mock para HTTP Callouts
+- **Metadatos**:
+  - Campos custom en Case (`Latest_Client_Message__c`, `Sentiment__c`, `Sentiment_Score__c`)
 
-The `sfdx-project.json` file contains useful configuration information for your project. See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm) in the _Salesforce DX Developer Guide_ for details about this file.
+---
 
-## Read All About It
+## 🔹 Instalación / Despliegue
+1. Clonar este repositorio.
+2. Desplegar con **Salesforce CLI** (`sfdx force:source:deploy -p force-app`) en tu Org de sandbox o dev.
+3. Configurar **Named Credential** / Remote Site para la API de Sentiment (puede ser mock).
+4. Activar Flows:
+   - `Record_Triggered_Flow_Case_Sentiment`
+   - `Subflow_Negative_Case_Management`
 
-- [Salesforce Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
-- [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference.htm)
+---
+
+## 🔹 Uso
+1. Crear o actualizar un **Case** con un mensaje de cliente en `Latest_Client_Message__c`.
+2. Flow se dispara automáticamente:
+   - Analiza el sentimiento.
+   - Actualiza campos en Case.
+   - Crea Task si es negativo.
+   - Envía correo y registra log.
+3. Verificar resultados en:
+   - Related List: Tasks/Activities
+   - Campos Case: `Sentiment__c`, `Sentiment_Score__c`
+   - Logs en objeto `Log__c`
+
+---
+
+## 🔹 Diagrama de Arquitectura
+<!-- TO DO -->
+
+**Flujo:**
+
+
+## 🔹 Testing
+- Todos los servicios tienen **Test Classes**:
+  - `SentimentServiceTest`
+  - `CaseSentimentDomainTest`
+  - `LogServiceTest`
+- **Callouts** mockeados con `HttpCalloutMock`.
+- Cobertura >90%.
+- Para ejecutar tests: `sfdx force:apex:test:run --resultformat human`
+
+---
+
+## 🔹 Próximos pasos / mejoras
+- Integrar con **LWC** para mostrar sentimiento en tiempo real.
+- Conectar con **Agent-Force / AI Salesforce**.
+- Automatización de emails avanzados según score de sentimiento.
