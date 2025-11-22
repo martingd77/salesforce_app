@@ -9,6 +9,7 @@ public with sharing class SentimentJob implements Queueable, Database.AllowsCall
     public void execute(QueueableContext qc) {
 
         List<Case> updates = new List<Case>();
+        List<Task> tasksToCreate = new List<Task>();
 
         for (Case c : casesToProcess) {
             try {
@@ -23,6 +24,18 @@ public with sharing class SentimentJob implements Queueable, Database.AllowsCall
 
                 updates.add(updatedCase);
 
+                // Create Task if sentiment is negative
+                if (resp.sentiment != null && resp.sentiment.equalsIgnoreCase('Negative')) {
+                    Task t = new Task(
+                        Subject = 'Revisar sentimiento negativo del cliente',
+                        Description = 'El sentimiento del mensaje del cliente es negativo (Score: ' + resp.score + '). Requiere atención inmediata.',
+                        WhatId = c.Id,
+                        Status = 'Not Started',
+                        Priority = 'High'
+                    );
+                    tasksToCreate.add(t);
+                }
+
             } catch (Exception ex) {
                 System.debug('Error in sentiment job: ' + ex.getMessage());
             }
@@ -30,6 +43,10 @@ public with sharing class SentimentJob implements Queueable, Database.AllowsCall
 
         if (!updates.isEmpty()) {
             update updates;
+        }
+
+        if (!tasksToCreate.isEmpty()) {
+            insert tasksToCreate;
         }
     }
 }
