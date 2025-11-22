@@ -15,7 +15,7 @@ public with sharing class CaseSentimentDomain {
             
             // Call API
             SentimentDTO.SentimentResponse result =
-                SentimentService.callAPI(c.Latest_Client_Message__c);
+                SentimentService.analyzeText(c.Latest_Client_Message__c);
 
             // Set fields
             c.Sentiment__c = result.sentiment;

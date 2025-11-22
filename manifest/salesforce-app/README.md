@@ -15,20 +15,21 @@ Este proyecto demuestra un flujo completo de automatización en Salesforce que:
 ---
 
 ## 🔹 Tecnologías y conceptos usados
-- **Salesforce Flow**:
-  - Record-Triggered Flow (cuando cambia `Latest_Client_Message__c`)
-  - Subflows para casos negativos
-- **Apex**:
+- **Apex Triggers**:
+  - `CaseTrigger` → Detecta cambios en `Latest_Client_Message__c`
+  - `CaseTriggerHandler.cls` → Lógica de negocio y detección de cambios
+- **Apex Queueable Jobs**:
+  - `SentimentJob.cls` → Ejecuta callouts de forma asíncrona (permite callouts fuera del contexto del trigger)
+- **Apex Services**:
   - `SentimentService.cls` → Lógica de API callout
-  - `CaseSentimentDomain.cls` → Lógica de negocio y bulkification
-  - `ActivityCreator.cls` → Creación de Task/Activity desde Flow
+  - `CaseSentimentDomain.cls` → Lógica de negocio y bulkification (método invocable disponible para Flow si se requiere)
   - `LogService.cls` → Registro de logs internos
 - **DTOs** para request/response de API
 - **Test classes** >90% coverage
 - **Best practices**:
-  - Separación de capas
+  - Separación de capas (Handler → Job → Service)
   - Bulkification
-  - Invocable Methods para Flow
+  - Procesamiento asíncrono con Queueable para callouts
   - Mock para HTTP Callouts
 - **Metadatos**:
   - Campos custom en Case (`Latest_Client_Message__c`, `Sentiment__c`, `Sentiment_Score__c`)
@@ -38,37 +39,53 @@ Este proyecto demuestra un flujo completo de automatización en Salesforce que:
 ## 🔹 Instalación / Despliegue
 1. Clonar este repositorio.
 2. Desplegar con **Salesforce CLI** (`sfdx force:source:deploy -p force-app`) en tu Org de sandbox o dev.
-3. Configurar **Named Credential** / Remote Site para la API de Sentiment (puede ser mock).
-4. Activar Flows:
-   - `Record_Triggered_Flow_Case_Sentiment`
-   - `Subflow_Negative_Case_Management`
+3. Configurar **Named Credential** (`SentimentAPI`) / Remote Site para la API de Sentiment (puede ser mock).
+4. El trigger se activa automáticamente al desplegar el código.
 
 ---
 
 ## 🔹 Uso
 1. Crear o actualizar un **Case** con un mensaje de cliente en `Latest_Client_Message__c`.
-2. Flow se dispara automáticamente:
-   - Analiza el sentimiento.
-   - Actualiza campos en Case.
-   - Crea Task si es negativo.
-   - Envía correo y registra log.
+2. El **Trigger** se dispara automáticamente:
+   - Detecta el cambio en `Latest_Client_Message__c`.
+   - Encola un `SentimentJob` (Queueable) para procesar el callout de forma asíncrona.
+   - El job ejecuta el callout a la API de sentimiento.
+   - Actualiza los campos `Sentiment__c` y `Sentiment_Score__c` en el Case.
 3. Verificar resultados en:
-   - Related List: Tasks/Activities
    - Campos Case: `Sentiment__c`, `Sentiment_Score__c`
-   - Logs en objeto `Log__c`
+   - Logs en objeto `Log__c` (si está configurado)
+   - Debug logs para ver el procesamiento asíncrono
 
 ---
 
 ## 🔹 Diagrama de Arquitectura
-<!-- TO DO -->
 
 **Flujo:**
+```
+Case Update (Latest_Client_Message__c cambia)
+    ↓
+CaseTrigger (after update)
+    ↓
+CaseTriggerHandler.run()
+    ↓
+Detecta cambios → Filtra Cases a procesar
+    ↓
+System.enqueueJob(new SentimentJob(cases))
+    ↓
+SentimentJob.execute() [Queueable - permite callouts]
+    ↓
+Para cada Case:
+    SentimentService.callAPI(text)
+    ↓
+Actualiza Case: Sentiment__c, Sentiment_Score__c
+```
 
 
 ## 🔹 Testing
 - Todos los servicios tienen **Test Classes**:
   - `SentimentServiceTest`
   - `CaseSentimentDomainTest`
+  - `CaseTriggerHandlerTest` (si existe)
   - `LogServiceTest`
 - **Callouts** mockeados con `HttpCalloutMock`.
 - Cobertura >90%.
