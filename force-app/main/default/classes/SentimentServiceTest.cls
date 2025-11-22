@@ -68,6 +68,14 @@ private class SentimentServiceTest {
 
         System.assertEquals('Negative', updatedCase.Sentiment__c);
         System.assertEquals(0.13, updatedCase.Sentiment_Score__c);
+
+        // Verify Task was created for negative sentiment
+        List<Task> tasks = [SELECT Id, Subject, WhatId, Status, Priority 
+                           FROM Task WHERE WhatId = :c.Id];
+        System.assertEquals(1, tasks.size(), 'A Task should be created for negative sentiment');
+        System.assertEquals('Revisar sentimiento negativo del cliente', tasks[0].Subject);
+        System.assertEquals('High', tasks[0].Priority);
+        System.assertEquals('Not Started', tasks[0].Status);
     }
 
 
