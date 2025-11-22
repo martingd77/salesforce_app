@@ -5,8 +5,8 @@
       "default": true
     }
   ],
-  "name": "salesforce_app",
+  "name": "salesforce-app",
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "59.0"
+  "sourceApiVersion": "65.0"
 }
