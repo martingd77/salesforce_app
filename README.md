@@ -42,6 +42,20 @@ Este proyecto demuestra un flujo completo de automatización en Salesforce que:
 3. Configurar **Named Credential** (`SentimentAPI`) / Remote Site para la API de Sentiment (puede ser mock).
 4. El trigger se activa automáticamente al desplegar el código.
 
+### 🔹 Modo Mock para Pruebas Reales
+Para probar la creación de Tasks sin una API real configurada:
+
+1. **Opción 1: Modo Mock Local (Recomendado para desarrollo)**
+   - Editar `SentimentService.cls` línea 7
+   - Cambiar `USE_MOCK_MODE = false` a `USE_MOCK_MODE = true`
+   - El servicio devolverá **Negative por defecto**, permitiendo probar la creación de Tasks
+   - El mock analiza palabras clave básicas (ej: "horrible" → Negative, "excellent" → Positive)
+
+2. **Opción 2: Usar Mock Inteligente en Tests**
+   - Usar `SentimentServiceMockIntelligent` en lugar de `SentimentServiceMock`
+   - Permite análisis básico de sentimiento basado en palabras clave
+   - Útil para pruebas más realistas
+
 ---
 
 ## 🔹 Uso

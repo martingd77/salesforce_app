@@ -5,6 +5,7 @@ public with sharing class CaseSentimentDomain {
 
     public static void analyze(List<CaseWrapper> requestList) {
         List<Case> casesToUpdate = new List<Case>();
+        List<Task> tasksToCreate = new List<Task>();
 
         for (CaseWrapper wrapper : requestList) {
             Case c = wrapper.record;
@@ -22,10 +23,26 @@ public with sharing class CaseSentimentDomain {
             c.Sentiment_Score__c = result.score;
 
             casesToUpdate.add(c);
+
+            // Create Task if sentiment is negative
+            if (result.sentiment != null && result.sentiment.equalsIgnoreCase('Negative')) {
+                Task t = new Task(
+                    Subject = 'Revisar sentimiento negativo del cliente',
+                    Description = 'El sentimiento del mensaje del cliente es negativo (Score: ' + result.score + '). Requiere atención inmediata.',
+                    WhatId = c.Id,
+                    Status = 'Not Started',
+                    Priority = 'High'
+                );
+                tasksToCreate.add(t);
+            }
         }
 
         if (!casesToUpdate.isEmpty()) {
             update casesToUpdate;
+        }
+
+        if (!tasksToCreate.isEmpty()) {
+            insert tasksToCreate;
         }
     }
 
