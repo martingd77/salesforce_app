@@ -1,0 +1,53 @@
+<template>
+    <lightning-card title="Sports API – Próximos eventos">
+        
+        <!-- Picklist de ligas -->
+        <template if:true={leagues}>
+            <div  style="width: 50%; min-width: 200px; margin-bottom: 1rem;">
+                <lightning-combobox
+                name="leaguePicklist"
+                label="Selecciona la liga"
+                value={selectedLeagueId}
+                placeholder="--Selecciona una liga--"
+                options={leagueOptions}
+                onchange={handleLeagueChange}>
+            </lightning-combobox>
+            </div>
+        </template>
+
+        <!-- Spinner -->
+        <template if:true={loading}>
+            <div class="spinner-wrapper">
+                <lightning-spinner size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Grilla de eventos -->
+        <template if:true={events}>
+            <lightning-layout multiple-rows class="slds-m-around_medium">
+                <template for:each={events} for:item="evt">
+                    <lightning-layout-item key={evt.idEvent} size="12" medium-device-size="6" large-device-size="4">
+                        <div class="event-card slds-p-around_small slds-box slds-theme_default">
+                            <div class="slds-text-heading_small slds-m-bottom_x-small">
+                                <b>{evt.strEvent}</b>
+                            </div>
+                            <div class="slds-text-body_small">
+                                Fecha: {evt.dateEvent}<br/>
+                                Liga: {evt.strLeague} – {evt.strSeason}
+                            </div>
+                            <template if:true={evt.strThumb}>
+                                <img src={evt.strThumb} class="event-img"/>
+                            </template>
+                        </div>
+                    </lightning-layout-item>
+                </template>
+            </lightning-layout>
+        </template>
+
+        <!-- Error -->
+        <template if:true={error}>
+            <div class="slds-text-color_error">{error}</div>
+        </template>
+
+    </lightning-card>
+</template>
